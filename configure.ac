@@ -2,10 +2,10 @@ dnl require autoconf 2.60 (AS_ECHO/AS_ECHO_N)
 AC_PREREQ([2.60])
 define(_CLIENT_VERSION_MAJOR, 0)
 define(_CLIENT_VERSION_MINOR, 10)
-define(_CLIENT_VERSION_REVISION, 4)
+define(_CLIENT_VERSION_REVISION, 1)
 define(_CLIENT_VERSION_BUILD, 1)
 define(_CLIENT_VERSION_IS_RELEASE, true)
-define(_COPYRIGHT_YEAR, 2018)
+define(_COPYRIGHT_YEAR, 2015)
 AC_INIT([Unobtanium],[_CLIENT_VERSION_MAJOR._CLIENT_VERSION_MINOR._CLIENT_VERSION_REVISION],[info@unobtanium.uno],[unobtanium])
 AC_CONFIG_SRCDIR([src/main.cpp])
 AC_CONFIG_HEADERS([src/config/bitcoin-config.h])
@@ -115,9 +115,9 @@ AC_ARG_ENABLE([hardening],
 
 AC_ARG_ENABLE([reduce-exports],
   [AS_HELP_STRING([--enable-reduce-exports],
-  [attempt to reduce exported symbols in the resulting executables (default is no)])],
+  [attempt to reduce exported symbols in the resulting executables (default is yes)])],
   [use_reduce_exports=$enableval],
-  [use_reduce_exports=no])
+  [use_reduce_exports=auto])
 
 AC_ARG_ENABLE([ccache],
   [AS_HELP_STRING([--enable-ccache],
@@ -133,7 +133,7 @@ AC_ARG_ENABLE([lcov],
 
 AC_ARG_ENABLE([glibc-back-compat],
   [AS_HELP_STRING([--enable-glibc-back-compat],
-  [enable backwards compatibility with glibc])],
+  [enable backwards compatibility with glibc and libstdc++])],
   [use_glibc_compat=$enableval],
   [use_glibc_compat=no])
 
@@ -419,7 +419,7 @@ if test x$use_hardening != xno; then
 
   if test x$TARGET_OS != xwindows; then
     # All windows code is PIC, forcing it on just adds useless compile warnings
-    AX_CHECK_COMPILE_FLAG([-fPIE],[HARDENED_CXXFLAGS="$HARDENED_CXXFLAGS -fPIE"])
+    AX_CHECK_COMPILE_FLAG([-fPIC],[HARDENED_CXXFLAGS="$HARDENED_CXXFLAGS -fPIC"])
     AX_CHECK_LINK_FLAG([[-pie]], [HARDENED_LDFLAGS="$HARDENED_LDFLAGS -pie"])
   fi
 
@@ -473,14 +473,22 @@ AC_LINK_IFELSE([AC_LANG_SOURCE([
   [
     AC_MSG_RESULT(no)
     if test x$use_reduce_exports = xyes; then
-      AC_MSG_ERROR([Cannot find a working visibility attribute. Use --disable-reduce-exports.])
+      AC_MSG_ERROR([Cannot find a working visibility attribute. Use --disable-reduced-exports.])
     fi
+      AC_MSG_WARN([Cannot find a working visibility attribute. Disabling reduced exports.])
+      use_reduce_exports=no
   ]
 )
 
-if test x$use_reduce_exports = xyes; then
+if test x$use_reduce_exports != xno; then
   AX_CHECK_COMPILE_FLAG([-fvisibility=hidden],[RE_CXXFLAGS="-fvisibility=hidden"],
-  [AC_MSG_ERROR([Cannot set default symbol visibility. Use --disable-reduce-exports.])])
+  [
+    if test x$use_reduce_exports = xyes; then
+      AC_MSG_ERROR([Cannot set default symbol visibility. Use --disable-reduced-exports.])
+    fi
+    AC_MSG_WARN([Cannot set default symbol visibility. Disabling reduced exports.])
+    use_reduce_exports=no
+  ])
 fi
 
 LEVELDB_CPPFLAGS=
@@ -527,7 +535,7 @@ AX_BOOST_THREAD
 AX_BOOST_CHRONO
 
 
-if test x$use_reduce_exports = xyes; then
+if test x$use_reduce_exports != xno; then
   AC_MSG_CHECKING([for working boost reduced exports])
   TEMP_CPPFLAGS="$CPPFLAGS"
   CPPFLAGS="$BOOST_CPPFLAGS $CPPFLAGS"
@@ -542,13 +550,24 @@ if test x$use_reduce_exports = xyes; then
     ]])],[
       AC_MSG_RESULT(yes)
     ],[:
-    AC_MSG_ERROR([boost versions < 1.49 are known to be broken with reduced exports. Use --disable-reduced-exports.])
+    if test x$use_reduce_exports = xauto; then
+      use_reduce_exports=no
+    else
+      if test x$use_reduce_exports = xyes; then
+        AC_MSG_ERROR([boost versions < 1.49 are known to be broken with reduced exports. Use --disable-reduced-exports.])
+      fi
+    fi
+    AC_MSG_RESULT(no)
+    AC_MSG_WARN([boost versions < 1.49 are known to have symbol visibility issues. Disabling reduced exports.])
   ])
   CPPFLAGS="$TEMP_CPPFLAGS"
 fi
+
+elif test x$use_reduce_exports = xauto; then
+    use_reduce_exports=yes
 fi
 
-if test x$use_reduce_exports = xyes; then
+if test x$use_reduce_exports != xno; then
     CXXFLAGS="$CXXFLAGS $RE_CXXFLAGS"
     AX_CHECK_LINK_FLAG([[-Wl,--exclude-libs,ALL]], [RELDFLAGS="-Wl,--exclude-libs,ALL"])
 fi
@@ -810,7 +829,7 @@ else
 fi
 
 AC_MSG_CHECKING([whether to reduce exports])
-if test x$use_reduce_exports = xyes; then
+if test x$use_reduce_exports != xno; then
   AC_MSG_RESULT([yes])
 else
   AC_MSG_RESULT([no])
