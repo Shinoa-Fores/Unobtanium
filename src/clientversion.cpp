@@ -18,7 +18,7 @@ const std::string CLIENT_NAME("Unobtanium");
 /**
  * Client version number
  */
-#define CLIENT_VERSION_SUFFIX "-BadChoicesZ"
+#define CLIENT_VERSION_SUFFIX "-btcinfo-bip65"
 
 
 /**
