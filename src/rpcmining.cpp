@@ -71,7 +71,6 @@ Value GetNetworkHashPS(int lookup, int height) {
     int64_t timeDiff = maxTime - minTime;
 
     return workDiff.getdouble() / timeDiff;}
-}
 
 Value getnetworkhashps(const Array& params, bool fHelp)
 {
