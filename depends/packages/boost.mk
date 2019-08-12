@@ -1,8 +1,8 @@
 package=boost
-$(package)_version=1_64_0
-$(package)_download_path=http://dl.bintray.com/boostorg/release/1.64.0/source/
+$(package)_version=1_65_0
+$(package)_download_path=https://dl.bintray.com/boostorg/release/1.65.0/source/
 $(package)_file_name=$(package)_$($(package)_version).tar.bz2
-$(package)_sha256_hash=7bcc5caace97baa948931d712ea5f37038dbb1c5d89b43ad4def4ed7cb683332
+$(package)_sha256_hash=ea26712742e2fb079c2a566a31f3266973b76e38222b9f88b387e3c8b2f9902c
 
 define $(package)_set_vars
 $(package)_config_opts_release=variant=release
@@ -19,7 +19,7 @@ $(package)_toolset_$(host_os)=gcc
 $(package)_archiver_$(host_os)=$($(package)_ar)
 $(package)_toolset_darwin=darwin
 $(package)_archiver_darwin=$($(package)_libtool)
-$(package)_config_libraries=program_options,chrono,filesystem,system,thread,test
+$(package)_config_libraries=chrono,filesystem,system,thread,test
 $(package)_cxxflags=-std=c++11 -fvisibility=hidden
 $(package)_cxxflags_linux=-fPIC
 endef
@@ -37,6 +37,5 @@ define $(package)_build_cmds
 endef
 
 define $(package)_stage_cmds
-  ./b2 -d0 -j4 --ignore-site-config --prefix=$($(package)_staging_prefix_dir) $($(package)_config_opts) install
+  ./b2 -d0 -j4 --prefix=$($(package)_staging_prefix_dir) $($(package)_config_opts) install
 endef
-
