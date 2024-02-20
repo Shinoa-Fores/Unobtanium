@@ -116,10 +116,6 @@ AC_DEFUN([UNOBTANIUM_QT_CONFIGURE],[
   if test "x$unobtanium_cv_static_qt" = xyes; then
     _UNOBTANIUM_QT_FIND_STATIC_PLUGINS
     AC_DEFINE(QT_STATICPLUGIN, 1, [Define this symbol if qt plugins are static])
-    if test "x$TARGET_OS" != xandroid; then
-       _UNOBTANIUM_QT_CHECK_STATIC_PLUGINS([Q_IMPORT_PLUGIN(QMinimalIntegrationPlugin)],[-lqminimal])
-       AC_DEFINE(QT_QPA_PLATFORM_MINIMAL, 1, [Define this symbol if the minimal qt platform exists])
-    fi
     if test "x$TARGET_OS" = xwindows; then
       _UNOBTANIUM_QT_CHECK_STATIC_PLUGINS([Q_IMPORT_PLUGIN(QWindowsIntegrationPlugin)],[-lqwindows])
       AC_DEFINE(QT_QPA_PLATFORM_WINDOWS, 1, [Define this symbol if the qt platform is windows])
